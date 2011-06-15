@@ -187,4 +187,58 @@ GHCI抛出的错误信息是它不知道应该返回什么类型。注意到前�
     ghci> read "(3, 'a')" :: (Int, Char)  
     (3, 'a')
 
+编译器能推断出大部分表达式的类型。但是对于像`read "5"`这样的表达式，编译器不知道应该返回一个`Int`类型还是`Float`类型的值。为了知道是什么类型，Haskell必须对`read "5"`求值，然而Haskell是静态类型语言，它必须在编译之前获得类型信息。所以类型注解的意思相当于告诉编译器“我们需要的是这种类型，如果你不知道的话”。
 
+`Enum`的成员能够按顺序进行排列。`Enum`类型的主要优点是能够将它用在区间列表中。它的成员都定义了后继和前身，可以通过`succ`和`pred`函数获得。这个类包含的类型有：`()`，`Bool`，`Char`，`Ordering`，`Int`，`Integer`，`Float`和`Double`。
+
+    ghci> ['a'..'e']  
+    "abcde"  
+    ghci> [LT .. GT]  
+    [LT,EQ,GT]  
+    ghci> [3 .. 5]  
+    [3,4,5]  
+    ghci> succ 'B'  
+    'C'
+
+`Dounded`的成员都有上下限。
+
+    ghci> minBound :: Int  
+    -2147483648  
+    ghci> maxBound :: Char  
+    '\1114111'  
+    ghci> maxBound :: Bool  
+    True  
+    ghci> minBound :: Bool  
+    False
+
+`minBound`和`maxBound`的类型是`(Bounded a) => a`，在某种意义上是多态的常量。
+
+如果元组的元素都是绑定的，那元组也是绑定的。
+
+    ghci> maxBound :: (Bool, Int, Char)  
+    (True,2147483647,'\1114111')
+
+`Num`指所有的数字类型。
+
+    ghci> :t 20  
+    20 :: (Num t) => t
+
+所以所有的数字也是多态常量。它们能转义成属于`Num`类型类的类型。
+
+    ghci> 20 :: Int  
+    20  
+    ghci> 20 :: Integer  
+    20  
+    ghci> 20 :: Float  
+    20.0  
+    ghci> 20 :: Double  
+    20.0
+
+以上这些类型都属于`Num`，检查 `*` 的类型就会发生它接受所有的数字类型。
+
+    ghci> :t (*)  
+    (*) :: (Num a) => a -> a -> a
+
+它接受两个相同类型的数据并返回一个相应类型的数字作为结果。这就是为什么`(5::Int) * (6::Integer)`会导致异常而`5 * (6::Integer)能正常返回一个`Integer`，因为`5`既可以作为`Integer`也可以作为`Int`。
+
+`Num`的成员类型必须同时是`Show`和`Eq`的成员。
