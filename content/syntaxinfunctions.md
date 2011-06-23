@@ -86,7 +86,7 @@
 
 > 注意： `x:xs`模式使用非常频繁，尤其在递归函数中。但是带有`:`的模式只能匹配到长度为1以上的列表。
 
-如果想要绑定列表的头三个元素到变量，剩下的部分绑定到另一个变量，可以使用`x:y:z:zs`这样的模式。它只能匹配长度大于等于3的列表。
+如果想要绑定列表的头三个元素到变量[^4]，剩下的部分绑定到另一个变量，可以使用`x:y:z:zs`这样的模式。它只能匹配长度大于等于3的列表。
 
 我们知道了怎么去匹配一个列表，现在来实现一个我们自己的`head`函数。
 
@@ -142,11 +142,11 @@
 
 还有一件事值得注意－－不能在模式匹配中使用`++`。试想匹配一个`(xs ++ ys)`的模式，怎样区分第一个列表和第二个列表的元素？这是没有意义的。匹配`(xs ++ [x,y,z])`或者`(xs ++　[ｘ])`可能有些意义，但是因为列表的天性，我们不能这样做。
 
-###　看守，看守！
+###　守卫，守卫！
 
-![guards](http://s3.amazonaws.com/lyah/guards.png)模式是作用是测试某个值是否满足一定的模式并分解它，而看守的作用则是判断一个值（或多个值）的某些属性为真或假。听起来像是if语句，实际也非常类似。不同点在于当有多个条件时，看守的可读性更强，而且能与模式很好的配合。
+![guards](http://s3.amazonaws.com/lyah/guards.png)模式是作用是测试某个值是否满足一定的模式并分解它，而守卫的作用则是判断一个值（或多个值）的某些属性为真或假。听起来像是if语句，实际也非常类似。不同点在于当有多个条件时，守卫的可读性更强，而且能与模式很好的配合。
 
-不管看守的语法，先来看一个用看守构建的函数。这个函数将根据你的身体质量指数BMI[^3]对你进行不同的斥责。身体质量指数等于体重除以身高平方。BMI低于18.5的人偏瘦，18.5和25之间与正常，25到30之间的人过重，超过30就是肥胖。下面是这个函数（现在不会进行计算，这个函数只是接收BMI作为参数并告诉你相应的结果）：
+不管守卫的语法，先来看一个用守卫构建的函数。这个函数将根据你的身体质量指数BMI[^3]对你进行不同的斥责。身体质量指数等于体重除以身高平方。BMI低于18.5的人偏瘦，18.5和25之间与正常，25到30之间的人过重，超过30就是肥胖。下面是这个函数（现在不会进行计算，这个函数只是接收BMI作为参数并告诉你相应的结果）：
 
     bmiTell :: (RealFloat a) => a -> String  
     bmiTell bmi  
@@ -155,10 +155,92 @@
         | bmi <= 30.0 = "You're fat! Lose some weight, fatty!"  
         | otherwise   = "You're a whale, congratulations!"
 
-看守用一个跟随在函数名和参数后面的管道表示。通常这些看守会向右缩进并纵身对齐。一个看守本质上就是一个布尔表达式。如果这个表达式的求值为`True`，则执行相应的函数体。如果求值为`False`，则继续检查下一个。如果用24.3调用这个函数，它首先将检查参数是否小于或等于18.5，因为是大于，所以会接着检查下一个看守。这个检查对被二个看守截断，因为24.3小于25.0，函数返回第二个字符串。
+守卫用一个跟随在函数名和参数后面的管道表示。通常这些守卫会向右缩进并纵身对齐。一个守卫本质上就是一个布尔表达式。如果这个表达式的求值为`True`，则执行相应的函数体。如果求值为`False`，则继续检查下一个。如果用24.3调用这个函数，它首先将检查参数是否小于或等于18.5，因为是大于，所以会接着检查下一个守卫。这个检查对被二个守卫截断，因为24.3小于25.0，函数返回第二个字符串。
 
-这让人回忆起命令式语言中的if else树，只不过这种方式更为可读。虽然大家都反对大的if else树状结构，但有些时候就是无法避免。看守为这种情况提供了另一种优雅的解决办法。
+这让人回忆起命令式语言中的if else树，只不过这种方式更为可读。虽然大家都反对大的if else树状结构，但有些时候就是无法避免。守卫为这种情况提供了另一种优雅的解决办法。
+
+通常最后一个守卫是`otherwise`，`otherwise`的定义是`otherwise = True`，它将捕获所有的情况。这与模式很相似，不同的是守卫检查的是布尔条件，而后者检查的是输入是否满足一定的模式。
+
+守卫的应用当然不仅于上面的情况，可以将上面的函数修改一下，以让用户可以直接输入身高和体重，而不用用户调用这个函数之前自己计算BMI。
+
+    bmiTell :: (RealFloat a) => a -> a -> String  
+    bmiTell weight height  
+        | weight / height ^ 2 <= 18.5 = "You're underweight, you emo, you!"  
+        | weight / height ^ 2 <= 25.0 = "You're supposedly normal. Pffft, I bet you're ugly!"  
+        | weight / height ^ 2 <= 30.0 = "You're fat! Lose some weight, fatty!"  
+        | otherwise                 = "You're a whale, congratulations!"
+
+看看我是不是太胖了。。
+
+    ghci> bmiTell 85 1.90  
+    "You're supposedly normal. Pffft, I bet you're ugly!"
+
+YEH！我不是胖子。但是Haskell说我丑，管它呢！
+
+注意在函数参数和第一个守卫之间没有`=`号。很多新人可能犯这个错误。
+
+另一个非常简单的例子，让我们实现`max`函数，这个函数接受两个可以进行比较的东西作为参数并返回其中较大者。
+
+    max' :: (Ord a) => a -> a -> a  
+    max' a b   
+        | a > b     = a  
+        | otherwise = b
+
+守卫也可以写成一行，但是这样的可读性很差，强烈建议不要这样做，即使是很短的函数。为了演示，可以将`max'`写成这样：
+
+    max' :: (Ord a) => a -> a -> a  
+    max' a b | a > b = a | otherwise = b
+
+很不好读！接着用守卫实现我们自己的`compare`。
+
+    myCompare :: (Ord a) => a -> a -> Ordering  
+    a `myCompare` b  
+        | a > b     = GT  
+        | a == b    = EQ  
+        | otherwise = LT
+
+    ghci> 3 `myCompare` 2  
+    GT  
+
+>注意：函数不但可以通用反引号进行中缀调用，还可以用反引号定义。这种方式有时候更好读一些。
+
+### Where!?
+
+我们在上一节定义了如下一个函数计算BMI：
+
+    bmiTell :: (RealFloat a) => a -> a -> String  
+    bmiTell weight height  
+        | weight / height ^ 2 <= 18.5 = "You're underweight, you emo, you!"  
+        | weight / height ^ 2 <= 25.0 = "You're supposedly normal. Pffft, I bet you're ugly!"  
+        | weight / height ^ 2 <= 30.0 = "You're fat! Lose some weight, fatty!"  
+        | otherwise                   = "You're a whale, congratulations!"
+
+注意在上面有代码重复了三次，程序里面的重复（三次）比照脑袋踢上一脚还要糟糕。因为是同一个表达式重复了三次，如果能计算一次这个结果并绑定到一个变量，然后在函数体内使用这个变量而不是这个表达式就好了。那样可以将这个函数修改成如下形式：
+
+    bmiTell :: (RealFloat a) => a -> a -> String  
+    bmiTell weight height  
+        | bmi <= 18.5 = "You're underweight, you emo, you!"  
+        | bmi <= 25.0 = "You're supposedly normal. Pffft, I bet you're ugly!"  
+        | bmi <= 30.0 = "You're fat! Lose some weight, fatty!"  
+        | otherwise   = "You're a whale, congratulations!"  
+        where bmi = weight / height ^ 2
+
+我们将`where`关键词放到所有的守卫后面（最好和管道保持同样的缩进），然后定义一些变量和函数。这些变量对所有守卫可见，使我们可以不必在每个守卫重复同样的表达式。如果决定用不同的方式计算BMI，也只需要修改一次表达式。因为给表达式赋予了一个名字增强了程序的可读性，也因为只需要计算一次而加快的程序的执行速度。甚至可以将函数写成这样：
+
+    bmiTell :: (RealFloat a) => a -> a -> String  
+    bmiTell weight height  
+        | bmi <= skinny = "You're underweight, you emo, you!"  
+        | bmi <= normal = "You're supposedly normal. Pffft, I bet you're ugly!"  
+        | bmi <= fat    = "You're fat! Lose some weight, fatty!"  
+        | otherwise     = "You're a whale, congratulations!"  
+        where bmi = weight / height ^ 2  
+              skinny = 18.5  
+              normal = 25.0  
+              fat = 30.0  
+
+
 
 [^1]:这里类似于switch..case语句，但是其实模式匹配比switch语句要强大得多－－译者。
 [^2]: as patterns
 [^3]: Body mass index
+[^4]: 这里的原文是“names”，与通常意义上的变量是不同的。因为Haskell实际上不存在可变的(mutable)量。
